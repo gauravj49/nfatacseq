@@ -1,8 +1,7 @@
-.nextflow*
-work/
-data/
-results/
-.DS_Store
-tests/
-testing/
-*.pyc
+annotation
+docs
+input
+output
+.gitignore
+scripts/usage/00_git_setup_usage.sh
+
