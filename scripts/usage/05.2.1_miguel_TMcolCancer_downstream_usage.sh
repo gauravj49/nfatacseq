@@ -64,7 +64,7 @@ analysisDir="${projDir}/analysis"; mkdir -p ${analysisDir}
 pvalueDir="0_002" ; # pvalue=0.002 or pscore ~ 2.70
 pvalue="${pvalueDir//_/.}" 
 customPeaksDir="${analysisDir}/customPeaks/mergedLibrary"; mkdir -p ${customPeaksDir}
-peaksOutDir=${customPeaksDir}/q${pvalueDir}
+peaksOutDir=${customPeaksDir}/p${pvalueDir}
 consensusDir="${peaksOutDir}/consensus"
 
 bname="${projName}_consensus_peaks"
