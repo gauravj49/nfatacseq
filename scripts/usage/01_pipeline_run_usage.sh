@@ -53,3 +53,20 @@ nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/
 # 6.1) Test paired-end samples
 cd /media/rad/HDD1/atacseq/gaurav/petest
 nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/gaurav/petest/nfpetest_design.csv --genome GRCm38 -name TMColCancer
+
+##########################################################
+# 7) Thorsten
+##########################################################
+# 7.1)Thorsten FKO/PKF1OE
+# # Copy the fastq files
+# cd /media/nas/raw/TUM_Nextseq/200924_NB501802_0283_AHKW3YBGXG/Data/Intensities/BaseCalls/A0000559_fastq_ATAC
+# ls A0000*{FKO,PKF}*.fastq.gz | parallel --progress --eta -j 16 "rsync --ignore-existing -arzPR {} /media/rad/HDD1/atacseq/thorsten/atacfkopkf1oe/fastq"
+# cd -
+
+# Renamed PKF1O057E to PKF1OE057
+# mv /media/rad/HDD1/atacseq/thorsten/atacfkopkf1oe/fastq/A0000559-021-PKF1O057E-P14-atac_S3_R1_001.fastq.gz /media/rad/HDD1/atacseq/thorsten/atacfkopkf1oe/fastq/A0000559-021-PKF1OE057-P14-atac_S3_R1_001.fastq.gz
+
+# Run the pipeline
+cd /media/rad/HDD1/atacseq/thorsten/atacfkopkf1oe
+nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/thorsten/atacfkopkf1oe/nfatacfkopkf1oe_design.csv --genome GRCm38 --single_end -name atacfkopkf1oe
+
