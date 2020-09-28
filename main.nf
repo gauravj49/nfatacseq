@@ -485,7 +485,7 @@ process MAKE_GENOME_FILTER {
                         ch_genome_sizes_mrep_bigwig
 
     script:
-    blacklist_filter = params.blacklist ? "sortBed -i $blacklist -g ${fasta}.sizes | complementBed -i stdin -g ${fasta}.sizes" : "awk '{print \$1, '0' , \$2}' OFS='\t' ${fasta}.sizes"
+    blacklist_filter = params.blacklist ? "sortBed -i $blacklist -faidx ${fasta}.sizes | complementBed -i stdin -g ${fasta}.sizes" : "awk '{print \$1, '0' , \$2}' OFS='\t' ${fasta}.sizes"
     name_filter = params.mito_name ? "| awk '\$1 !~ /${params.mito_name}/ {print \$0}'": ''
     mito_filter = params.keep_mito ? '' : name_filter
     """
