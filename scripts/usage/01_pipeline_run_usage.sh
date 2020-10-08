@@ -7,16 +7,22 @@ cd /home/rad/users/gaurav/projects/workflows/nfatacseq/
 # 1) Anja
 ##########################################################
 # 1.1) nfTALLMm
+cd /media/rad/HDD1/atacseq/anja/nfTALLMm
 nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/anja/nfTALLMm/nfTALLMm_design.csv --genome GRCm38 -resume
+cd -
 
 ##########################################################
 # 2) Christine
 ##########################################################
 # 2.1) CK-ATACseq samples
+cd /media/rad/HDD1/atacseq/christine/ckatac
 nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/christine/ckatac/nfCKatac_design.csv --genome GRCm38 --single_end -name ckatac1 
+cd -
 
 # 2.2) AGRad_ATACseq_MUC001 samples
+cd media/rad/HDD1/atacseq/christine/AGRad_ATACseq_MUC001
 nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/christine/AGRad_ATACseq_MUC001/nfAGRad_ATACseq_MUC001_design.csv --genome GRCm38 --single_end -name AGRad_ATACseq_MUC001 
+cd - 
 
 ##########################################################
 # 3) helena
