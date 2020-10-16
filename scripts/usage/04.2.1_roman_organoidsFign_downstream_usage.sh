@@ -56,6 +56,7 @@ bash /home/rad/users/gaurav/projects/workflows/nfchipseq/scripts/generate_rawCou
 #########################################################################################
 # 3) DOWNSTREAM ANALYSIS
 #########################################################################################
+
 # 3.1) Output paramerts for downstream analysis
 projDir="${outdir}/${user}/${projName}"
 bamDir=${projDir}/results/bwa/mergedLibrary
@@ -115,116 +116,46 @@ bm=5
 padj=0.05
 python scripts/draw_features_heatmap.py -if=${darDir}/results_DEseq2/FignKrasExpressed_over_KrasExpressed_DE_RESULTS.txt -of=${darDir}/heatmap/ignKrasExpressed_over_KrasExpressed_DARs.txt -lf=${l2fc} -bm=${bm} -pj=${padj} -xc -yc -sm
 
+# 3.2.6.1) Get the raw counts file for the DARs
+python -c "import sys; import pandas as pd; import datatable as dt; input_file=sys.argv[1]; input_bed=sys.argv[2]; outtxt_file=sys.argv[3]; infileDT = dt.fread(input_file, sep='\t', header=True, nthreads=16); bedDT = dt.fread(input_bed, sep='\t', header=True, nthreads=16); infileDT = dt.fread(input_file, sep='\t', header=True, nthreads=16); bedDT = dt.fread(input_bed, sep='\t', header=True, nthreads=16); infileDF = infileDT.to_pandas(); infileDF.set_index('PeakID', inplace=True); bedDF = bedDT.to_pandas(); bedDF.set_index('feature', inplace=True); infileDF = infileDF[infileDF.index.isin(bedDF.index)]; infileDF.reset_index(level=0, inplace=True); infileDFColumns = infileDF.columns.tolist(); infileDFColumns.insert(3,infileDFColumns.pop(0)); infileDF = infileDF[infileDFColumns]; infileDF.to_csv(outtxt_file, header=True, index=False, sep='\t', float_format='%.0f');" /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/organoidsFign_consensus_peaks_rawCounts.txt /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/DARs/heatmap/FignKrasExpressed_over_KrasExpressed_significant_filtered_DARs.txt /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/DARs/heatmap/FignKrasExpressed_over_KrasExpressed_significant_filtered_rawCounts.txt
 
+# 3.2.6.2) Get the annotation file for the DARs
+python -c "import sys; import pandas as pd; import datatable as dt; input_file=sys.argv[1]; input_bed=sys.argv[2]; outtxt_file=sys.argv[3]; infileDT = dt.fread(input_file, sep='\t', header=True, nthreads=16); bedDT = dt.fread(input_bed, sep='\t', header=True, nthreads=16); infileDT = dt.fread(input_file, sep='\t', header=True, nthreads=16); bedDT = dt.fread(input_bed, sep='\t', header=True, nthreads=16); infileDF = infileDT.to_pandas(); infileDF.set_index('PeakID', inplace=True); bedDF = bedDT.to_pandas(); bedDF.set_index('feature', inplace=True); infileDF = infileDF[infileDF.index.isin(bedDF.index)]; infileDF.reset_index(level=0, inplace=True); infileDFColumns = infileDF.columns.tolist(); infileDFColumns.insert(3,infileDFColumns.pop(0)); infileDF = infileDF[infileDFColumns]; infileDF.to_csv(outtxt_file, header=True, index=False, sep='\t', float_format='%.0f');" /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/organoidsFign_consensus_peaks_annotation.txt /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/DARs/heatmap/FignKrasExpressed_over_KrasExpressed_significant_filtered_DARs.txt /media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/DARs/heatmap/FignKrasExpressed_over_KrasExpressed_significant_filtered_annotation.txt
 
+# --------------------------------------------------------
 
-############################################
-# 3.2.6) Get the DARs
-sampleAnnotation="${consensusDir}/${bname}_sample_annotation.txt"
+# 4.1) Integration of Chipseq and ATACseq samples
 
-R
-# Load libraries
-cat("- Loading libraries...\n")
-suppressPackageStartupMessages(library("DESeq2", warn.conflicts=FALSE, quietly=TRUE))
-suppressPackageStartupMessages(library("edgeR" , warn.conflicts=FALSE, quietly=TRUE))
-suppressPackageStartupMessages(library("RUVSeq", warn.conflicts=FALSE, quietly=TRUE))
-suppressPackageStartupMessages(library("vsn", warn.conflicts=FALSE, quietly=TRUE))
-suppressPackageStartupMessages(library("RColorBrewer", warn.conflicts=FALSE, quietly=TRUE))
-suppressPackageStartupMessages(library("BiocParallel", warn.conflicts=FALSE, quietly=TRUE))
-register(MulticoreParam(4))
+# 4.1.1) Copy the relevant peaks files in the subfolders
+customPeaksDir="${consensusDir}/customConsensus"; mkdir -p ${customPeaksDir}
+mkdir -p ${customPeaksDir}/{PK,PKF}/peaks
+cp -rv ${peaksOutDir}/*{V5,Pdk}*.broadPeak ${customPeaksDir}/PK/peaks
+cp -rv ${peaksOutDir}/*SW*.broadPeak ${customPeaksDir}/PKF/peaks
 
-# Input and output file
-countsMatrixFile  <- "/media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/organoidsFign_consensus_peaks_rawCounts.mat"
-outputBaseFileName<- "organoidsFign_consensus_peaks"
-sampleAnnFile     <- "/media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/organoidsFign_consensus_peaks_sample_annotation.txt"
-outputdir         <- "/media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/DARs"; system(paste0("mkdir -p ", outputdir))
-plotsdir          <- paste(outputdir, "/plots", sep=''); system(paste("mkdir -p", plotsdir, sep=' '));
+for pd in PK PKF;
+do 
+  customSamplesPeaksDir="${customPeaksDir}/${pd}"
+  peaksDir=${customSamplesPeaksDir}/peaks
+  echo -e "- ${projDir}\n- ${peaksDir}\n- ${customSamplesPeaksDir}"
+  bash /home/rad/users/gaurav/projects/workflows/nfchipseq/scripts/generate_rawCount_mergedPeak_files.sh ${projDir} broadPeak ${peaksDir} ${customSamplesPeaksDir}
 
-# Get basenames
-basefilename      <- tools::file_path_sans_ext(basename(countsMatrixFile))
-extfilename       <- tools::file_ext(countsMatrixFile)
+  origAnnFile="${customSamplesPeaksDir}/interimFiles/${projName}_consensus_peaks.mLb.clN.boolean.txt"
+  scriptDir="/home/rad/users/gaurav/projects/workflows/nfatacseq"
+  bash /home/rad/users/gaurav/projects/workflows/nfatacseq/scripts/parse_nfatacseq_consensus_peaks_annotation.sh ${species} ${user} ${projName} ${customSamplesPeaksDir} ${bamDir} ${origAnnFile} ${scriptDir}
+  echo ""
+done
 
-# Get input data 
-cat("\n- Getting input data\n")
-sampleCountsDF    <- read.table(countsMatrixFile, row.names=1, sep="\t", header=TRUE, quote = "")
-coldata           <- read.table(sampleAnnFile, row.names=1, sep="\t", header=FALSE, quote = "")
-colnames(coldata) <- "condition"
-coldata$condition <- factor(coldata$condition)
+# Intersect with the chip data
+pkconsensusbed="/media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/customConsensus/PK/organoidsFign_consensus_peaks.bed"
+pkfconsensusbed="/media/rad/HDD1/atacseq/roman/organoidsFign/analysis/customPeaks/mergedLibrary/q0_01/consensus/customConsensus/PKF/organoidsFign_consensus_peaks.bed"
 
-# Create RLE plots for matrix
-cat("\n- Getting matrix of counts data from counts matrix file...\n")
-dds    <- DESeqDataSetFromMatrix(countData = sampleCountsDF, colData = coldata, design = ~ condition)
+for chipbed in $(ls ${customPeaksDir}/*_ChipSeq.txt);
+do
+  cbname=$(basename ${chipbed} _ChipSeq.txt)
+  intersectBed -a ${chipbed} -b ${pkconsensusbed}  -wo -f 0.5 > ${customPeaksDir}/50pc_covered_${cbname}_PK_organoidsFign_consensus_regions.txt
+  intersectBed -a ${chipbed} -b ${pkfconsensusbed} -wo -f 0.5 > ${customPeaksDir}/50pc_covered_${cbname}_PKF_organoidsFign_consensus_regions.txt
+  
+  intersectBed -a ${chipbed} -b ${pkconsensusbed}  -wo        > ${customPeaksDir}/atleast_1bp_overlap_${cbname}_PK_organoidsFign_consensus_regions.txt
+  intersectBed -a ${chipbed} -b ${pkfconsensusbed} -wo        > ${customPeaksDir}/atleast_1bp_overlap_${cbname}_PKF_organoidsFign_consensus_regions.txt
+done
 
-# Prefiltering
-keep <- rowSums(counts(dds)) >= 50
-dds <- dds[keep,]
-
-# DAR analysis
-dds <- DESeq(dds)
-res <- results(dds)
-res
-
-# Plot counts
-plotCountsFile <- paste0(plotsdir, "/", outputBaseFileName, "_count_plots.png", sep='') 
-png(filename=plotCountsFile, height=600, width=600, bg="white", res=100)
-plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
-dev.off()
-
-# Shrinkage estimators
-resultsNames(dds)
-# [1] "Intercept"                                   
-# [2] "condition_KrasExpressed_vs_FignKrasExpressed"
-
-# Because we are interested in treated vs untreated, we set 'coef=2'
-resLFC     <- lfcShrink(dds, coef="condition_KrasExpressed_vs_FignKrasExpressed", type="apeglm")
-resNorm    <- lfcShrink(dds, coef=2, type="normal")
-resAsh     <- lfcShrink(dds, coef=2, type="ashr")
-MAplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_MA_plot.png", sep='') 
-png(filename=MAplotFile, height=600, width=2000, bg="white", res=100)
-par(mfrow=c(1,3), mar=c(4,4,2,1))
-plotMA(resLFC,  main="apeglm")
-plotMA(resNorm, main="normal")
-plotMA(resAsh,  main="ashr")
-dev.off()
-
-# Extracting transformed values
-ntd <- normTransform(dds)
-vsd <- vst(dds, blind=FALSE)
-rld <- rlog(dds, blind=FALSE)
-
-meanSDplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_sizefactor_meanSD_plot.png", sep='') 
-png(filename=meanSDplotFile, height=600, width=600, bg="white", res=100)
-par(mfrow=c(1,3), mar=c(4,4,2,1))
-meanSdPlot(assay(ntd), main="SizeFactor")
-dev.off()
-
-meanSDplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_VSD_meanSD_plot.png", sep='') 
-png(filename=meanSDplotFile, height=600, width=600, bg="white", res=100)
-par(mfrow=c(1,3), mar=c(4,4,2,1))
-meanSdPlot(assay(vsd))
-dev.off()
-
-meanSDplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_RLD_meanSD_plot.png", sep='') 
-png(filename=meanSDplotFile, height=600, width=600, bg="white", res=100)
-par(mfrow=c(1,3), mar=c(4,4,2,1))
-meanSdPlot(assay(rld))
-dev.off()
-
-# Heatmap of the sample-to-sample distances
-samCorplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_sample_correlation_plot.png", sep='') 
-png(filename=samCorplotFile, height=1200, width=1200, bg="white", res=100)
-sampleDists                <- dist(t(assay(rld)))
-sampleDistMatrix           <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- paste(vsd$condition, rownames(sampleDistMatrix), sep="-")
-colnames(sampleDistMatrix) <- paste(vsd$condition, rownames(sampleDistMatrix), sep="-")
-colors                     <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
-pheatmap(sampleDistMatrix,
-         clustering_distance_rows=sampleDists,
-         clustering_distance_cols=sampleDists,
-         col=colors)
-dev.off()
-
-PCAplotFile <- paste0(plotsdir, "/", outputBaseFileName, "_PCA_plot.png", sep='') 
-png(filename=PCAplotFile, height=1200, width=1400, bg="white", res=100)
-plotPCA(vsd, intgroup=c("condition"))
-dev.off()
