@@ -1145,6 +1145,7 @@ process MERGED_LIB_MACS2 {
     macs2 callpeak \\
         -t ${bam[0]} \\
         $broad \\
+        --cutoff-analysis \\
         -f $format \\
         -g $params.macs_gsize \\
         -n $prefix \\
@@ -1152,7 +1153,8 @@ process MERGED_LIB_MACS2 {
         $fdr \\
         $pvalue \\
         --keep-dup all \\
-        --nomodel
+        --nomodel\\
+
 
     cat ${prefix}_peaks.${PEAK_TYPE} | wc -l | awk -v OFS='\t' '{ print "${name}", \$1 }' | cat $mlib_peak_count_header - > ${prefix}_peaks.count_mqc.tsv
 

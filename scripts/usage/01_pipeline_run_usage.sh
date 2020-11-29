@@ -1,14 +1,22 @@
 # pwd
 cd /home/rad/users/gaurav/projects/workflows/nfatacseq/
 
-# NOTE: This is depricated now and the pipeline usage is now done in a separate usage file
+# NOTE: This will be depricated from 2021_01Jan_01 and the pipeline usage will be done in a separate usage file
+# rm -rf work/ results/ .nextflow*
 
 ##########################################################
 # 1) Anja
 ##########################################################
-# 1.1) nfTALLMm
-cd /media/rad/HDD1/atacseq/anja/nfTALLMm
-nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/anja/nfTALLMm/nfTALLMm_design.csv --genome GRCm38 -resume
+# 1.1) nfTALLmm
+# ls /media/nas/temporary/PUB_CRCs/tallCRCs/mouse/fastq/*.gz | parallel --progress --eta -j 32 "rsync --ignore-existing -arzRP {} /media/rad/HDD1/atacseq/anja/nfTALLmm/fastq"
+cd /media/rad/HDD1/atacseq/anja/nfTALLmm
+nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/anja/nfTALLmm/nfTALLmm_design.csv --genome GRCm38 --single_end --narrow_peak -resume
+cd -
+
+# 1.2) nfTALLhs
+# ls /media/nas/temporary/PUB_CRCs/tallCRCs/human/fastq/*.gz | parallel --progress --eta -j 32 "rsync --ignore-existing -arzRP {} /media/rad/HDD1/atacseq/anja/nfTALLhs/fastq"
+cd /media/rad/HDD1/atacseq/anja/nfTALLhs
+nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/anja/nfTALLhs/nfTALLhs_design.csv --genome GRCh38 --single_end --narrow_peak -resume
 cd -
 
 ##########################################################
@@ -20,9 +28,20 @@ nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/
 cd -
 
 # 2.2) AGRad_ATACseq_MUC001 samples
-cd media/rad/HDD1/atacseq/christine/AGRad_ATACseq_MUC001
+cd /media/rad/HDD1/atacseq/christine/AGRad_ATACseq_MUC001
 nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/christine/AGRad_ATACseq_MUC001/nfAGRad_ATACseq_MUC001_design.csv --genome GRCm38 --single_end -name AGRad_ATACseq_MUC001 
 cd - 
+
+# 2.2)AGBuchholz samples
+cd /media/rad/HDD1/atacseq/christine/AGBuchholz
+nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/christine/AGBuchholz/AGBuchholz_design.csv --genome GRCm38 -name AGBuchholz 
+cd - 
+
+# 2.3)Test PE 150 public samples from GEO GSE145705
+cd /media/rad/HDD1/atacseq/christine/GSE145705
+nextflow run /home/rad/users/gaurav/projects/workflows/nfatacseq --input /media/rad/HDD1/atacseq/christine/GSE145705/GSE145705_design.csv --genome GRCm38 -name GSE145705 
+cd - 
+
 
 ##########################################################
 # 3) helena
